@@ -12,19 +12,6 @@ class Pipeline:
     def forward_batch(self,inpt,train = False):
         if not isinstance(inpt,Batch):
             return "Invalid Input!"
-        # First layer
-        l1 = self.layers[0]
-        if len(inpt) == 1:
-            if train:
-                output = l1.train_same_input(inpt)
-            else:
-                output = l1.eval_same_input(inpt)
-        else:
-            if train:
-                output = l1.train_diff_input(inpt)
-            else: 
-                output = l1.eval_diff_input(inpt)
-        
         
         
         

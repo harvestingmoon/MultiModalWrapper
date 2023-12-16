@@ -16,7 +16,10 @@ class Base:
 
     def name(self):
         return self.layer_name
-    
+    def __len__(self):
+        return len(self.models)
+    def get_models(self):
+        return self.models
     def switch(self,*off_models): # switch to turn off the models
         for model in off_models:
             if model not in self.models:
@@ -73,9 +76,9 @@ class Base:
         nil_override = {model:[] for model in inputs.x}
         try:
             for model in inputs.x:  
-                if model not in self.models:
-                    return f"Model {model._get_name} not added to Layer {self.layer_name}"
-                else:
+                if model not in self.models and model not in self.connected:
+                    return f"Model {model._get_name} not added to {self.layer_name}"
+                else: 
                     if model in self.models and override:
                         model.train()
                         output = model(inputs.x[model])
@@ -93,12 +96,11 @@ class Base:
             if override:
                 return outputs
             else:
-                print("Some of the models have been turned off , to turn off \n either use model.switch(*model) or override = True")
-                print("Hence, some of the outputs churned out in dictionary have no outputs i.e [] outputs")
+                print("Warning! Some models might have been switched off")
                 return nil_override
 
         except:
-            raise Exception("Error From Running Code, either Invalid Tensor shape or")
+            raise Exception("Error From Running Code, either Invalid Tensor shape or error in model")
                         
     def eval_same_input(self,input):
         outputs = {model:[] for model in self.indv_models}
@@ -122,8 +124,8 @@ class Base:
         
         try:
             for model in inputs.x:
-                if model not in self.models:
-                    return f"Model {model._get_name} not added to Layer {self.layer_name}"
+                if model not in self.models and model not in self.connected:
+                    return f"Model {model._get_name} not added to {self.layer_name}"
                 else:
                     if model in self.models and override:
                         model.eval()
@@ -141,8 +143,7 @@ class Base:
             if override:
                 return outputs
             else:
-                print("Some of the models have been turned off , to turn off \n either use model.switch(*model) or override = True")
-                print("Hence, some of the outputs churned out in dictionary have no outputs i.e [] outputs")
+                print("Warning! Some models might have been switched off")
                 return nil_override
         except:
             raise Exception("Error From Running Code, either Invalid Tensor shape or")
@@ -173,6 +174,7 @@ class GPU_Base(Base):
     def train_diff_input(self, inputs, override=False):
         inputs.is_gpu = not inputs.is_gpu
         for model in inputs.x:
+            print(inputs.x[model])
             inputs.x[model] = inputs.x[model].to(device)
         return super().train_diff_input(inputs, override = override)
     
