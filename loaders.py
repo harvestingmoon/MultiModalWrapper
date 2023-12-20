@@ -23,9 +23,11 @@ class Adaptor:
     def __init__(self,m1,m2) -> None:
         self.top = m1
         self.bottom = m2
+        self.name = f"{self.top.name()} => {self.bottom.name()}"
 
-    def connection(self):
-        return f"{self.top.name()} => {self.bottom.name()}"
+    def indv_connection(self):
+        self.connect_all()
+        return f"{self.top.name()} => {self.bottom.name()} done!"
     
     def connect_all(self):
         if len(self.top) != len(self.bottom):
@@ -82,5 +84,32 @@ class Adaptor:
             output = self.bottom.eval_diff_input(tensor,override = override)
         
         return output
+    
+    ''' Immediately goes to second model instead of the first
+    by default, it skips through first layer and trains second layer instead'''
+    def select_pass(self,input_,train = False,override = False,top_layer = False):
+        inpt_tensor = []
+        if isinstance(input_,Tensor): 
+            for model in self.models:
+                inpt_tensor.append(Input_Loader(model,input_))
+            input_ = Batch(inpt_tensor)
 
+        for inpt_loader in input_.lst:
+            if not isinstance(inpt_loader,Input_Loader):
+                return f"Invalid Input! Should be of format [Input_Loader(1,2,3)...Input_Loader(1,2,3)]"
+        
+        if top_layer:
+            if train:
+                output = self.bottom.train_diff_input(input_,override = override)
+            else: 
+                output = self.bottom.eval_diff_input(input_,override = override)
+
+            return output
+        else:
+            if train:
+                output = self.bottom.train_diff_input(input_,override = override)
+            else: 
+                output = self.bottom.eval_diff_input(input_,override = override)
+            
+            return output 
 

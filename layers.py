@@ -11,8 +11,7 @@ class Base:
         self.layer_name = layer_name
         self.models = {model:True for model in indv_models}
         self.indv_models = list(indv_models)
-        self.connect = {model:None for model in indv_models}
-        self.connected = {}
+        self.connect = {model: [] for model in indv_models}
 
     def name(self):
         return self.layer_name
@@ -33,7 +32,7 @@ class Base:
         else:
             self.models[model] = True
             self.indv_models.append(model)
-            self.connect[model] = None
+            self.connect[model] = []
 
     def remove(self,model):
         if model not in self.models:
@@ -48,8 +47,8 @@ class Base:
         if model_ not in self.connect:
             return f"Model {model_} not in layer"
         else:
-            self.connect[model_] = attach_model
-            self.connected[attach_model] = model_
+            self.connect[model_].append(attach_model)
+
 
     def train_same_input(self,input):
         outputs = {model:[] for model in self.indv_models}
@@ -69,14 +68,20 @@ class Base:
     
     # input = {"Model class a": tensor input a , "Model class b": tensor input b}
     def train_diff_input(self,inputs,override = False):
+        def helper(iter,model):
+            for (k,v) in iter.items():
+                    if model == k or model == v:
+                        return True
+            return False
+
         if not isinstance(inputs,loaders.Batch):
             return "Invalid Input!"
         
         outputs = {model:[] for model in inputs.x}
         nil_override = {model:[] for model in inputs.x}
         try:
-            for model in inputs.x:  
-                if model not in self.models and model not in self.connected:
+            for model in inputs.x: 
+                if not helper(self.models,model):
                     return f"Model {model._get_name} not added to {self.layer_name}"
                 else: 
                     if model in self.models and override:
@@ -119,12 +124,18 @@ class Base:
     def eval_diff_input(self,inputs,override = False):
         outputs = {model:[] for model in inputs.x}
         nil_override = {model:[] for model in inputs.x}
+        def helper(iter,model):
+            for (k,v) in iter.items():
+                    if model == k or model == v:
+                        return True
+            return False
+        
         if not isinstance(inputs,loaders.Batch):
             return "Invalid Input"
         
         try:
             for model in inputs.x:
-                if model not in self.models and model not in self.connected:
+                if not helper(self.models,model):
                     return f"Model {model._get_name} not added to {self.layer_name}"
                 else:
                     if model in self.models and override:
